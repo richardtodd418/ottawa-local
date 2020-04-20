@@ -1,0 +1,7 @@
+.Polaris-ChoiceList__Choices {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  margin-right: 0;
+  justify-content: start;
+  grid-gap: 20px;
+}

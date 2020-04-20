@@ -1,0 +1,135 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation } from '@apollo/react-hooks';
+import { gql } from 'apollo-boost';
+import { Layout, FooterHelp, DisplayText, Page } from '@shopify/polaris';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+// import storesList from "../data/stores";
+import Stores from './Stores';
+import StoreForm from './StoreForm';
+
+import Nav from './Nav';
+import '../styles/styles.scss';
+
+const ALL_STORES_QUERY = gql`
+  query ALL_STORES_QUERY {
+    stores {
+      name
+      category
+      type
+      description
+      createdAt
+      url
+      primaryMethod
+      methodForm
+      methodEmail
+      methodPhone
+      methodOnline
+      image
+      invertedImage
+      delivery
+      pickup
+      phone
+      email
+    }
+  }
+`;
+
+const CREATE_STORE_MUTATION = gql`
+  mutation CREATE_STORE_MUTATION(
+    $name: String!
+    $category: String!
+    $type: String!
+    $url: String!
+    $primaryMethod: String!
+    $methodPhone: Boolean!
+    $methodOnline: Boolean!
+    $methodForm: Boolean!
+    $methodEmail: Boolean!
+    $email: String
+    $phone: String
+    $description: String
+    $delivery: Boolean!
+    $pickup: Boolean!
+    $invertedImage: Boolean!
+    $image: String
+  ) {
+    createStore(
+      name: $name
+      category: $category
+      type: $type
+      url: $url
+      primaryMethod: $primaryMethod
+      methodOnline: $methodOnline
+      methodForm: $methodForm
+      methodEmail: $methodEmail
+      methodPhone: $methodPhone
+      email: $email
+      phone: $phone
+      description: $description
+      delivery: $delivery
+      pickup: $pickup
+      invertedImage: $invertedImage
+      image: $image
+    ) {
+      id
+    }
+  }
+`;
+
+const App = () => {
+  const { loading, error, data } = useQuery(ALL_STORES_QUERY);
+  // using local data for stores
+  // const [stores] = useState(storesList);
+  const filterStores = (stores, category) => {
+    return stores.filter((store) => store.category === category);
+  };
+
+  if (loading) return <h1>Loading...</h1>;
+  if (error) return <h1>Error...</h1>;
+  const { stores } = data;
+  const sortedStores = stores.sort((a, b) => {
+    if (a.name < b.name) {
+      return -1;
+    }
+    if (a.name > b.name) {
+      return 1;
+    }
+    // names must be equal
+    return 0;
+  });
+
+  const categories = sortedStores.map((store) => store.category);
+  const uniqueCategories = [...new Set(categories)];
+  return (
+    <Router>
+      <div>
+        <Nav uniqueCategories={uniqueCategories} />
+        <Page>
+          <Switch>
+            {uniqueCategories.map((cat, index) => (
+              <Route key={index} path={`/${cat}`}>
+                <Stores stores={filterStores(sortedStores, cat)} />
+              </Route>
+            ))}
+            <Route path='/addstore'>
+              <StoreForm store={false} />
+            </Route>
+            <Route path='/'>
+              <Stores stores={sortedStores} />
+            </Route>
+          </Switch>
+          <Layout>
+            <Layout.Section>
+              <FooterHelp>
+                This site is for informational purposes and is not affiliated
+                with any of the listed merchants.
+              </FooterHelp>
+            </Layout.Section>
+          </Layout>
+        </Page>
+      </div>
+    </Router>
+  );
+};
+
+export default App;

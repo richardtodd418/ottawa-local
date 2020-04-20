@@ -1,0 +1,27 @@
+type User {
+  id: ID! @id
+  name: String!
+  email: String!
+}
+
+type Store {
+  id: ID! @id
+  name: String! @unique
+  category: String!
+  type: String!
+  url: String!
+  primaryMethod: String!
+  methodOnline: Boolean!
+  methodForm: Boolean!
+  methodEmail: Boolean!
+  methodPhone: Boolean!
+  email: String
+  phone: String
+  description: String
+  delivery: Boolean!
+  pickup: Boolean!
+  invertedImage: Boolean!
+  image: String
+  createdAt: DateTime @createdAt
+  updatedAt: DateTime @updatedAt
+}

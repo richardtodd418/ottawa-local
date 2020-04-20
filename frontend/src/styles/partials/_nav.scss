@@ -1,0 +1,53 @@
+.store-header--wrapper {
+  text-align: center;
+  width: 100%;
+}
+
+.nav {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  padding: 0 25px;
+  border-bottom: 1px solid #ddd;
+  margin-top: 10px;
+  align-items: center;
+
+  @media screen and (max-width: $small){
+
+    border-bottom: none;
+
+   .Polaris-DisplayText--sizeLarge {
+     font-size: 1.8rem;
+    }
+  }
+}
+
+.nav-links {
+  justify-self: end;
+  list-style: none;
+  display: flex;
+  grid-template-columns: repeat(auto-fit, 100px);
+  grid-gap: 5px;
+  text-transform: capitalize;
+  padding-inline-start: 0;
+
+
+  li {
+    flex: 0 0 auto;
+  }
+
+  a {
+    text-decoration: none;
+    color: black;
+    font-size: 1.8rem;
+    padding: 0 10px 12px;
+
+    
+  }
+
+  @media screen and (max-width: $small){
+   
+    a {
+      font-size: 1.5rem
+    }
+  }
+}

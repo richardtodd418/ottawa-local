@@ -1,0 +1,68 @@
+.Polaris-Layout {
+  align-items: inherit;
+}
+
+.Polaris-Layout__Section {
+  height: auto;
+}
+
+.Polaris-Card {
+  height: 100%;  
+}
+
+.store-wrapper {
+
+  .Polaris-Banner--withinContentContainer.Polaris-Banner {
+    margin-top: 0;
+  }
+
+  .Polaris-ResourceItem {
+    cursor: auto;
+
+    &:hover {
+      background-image: unset;
+    }
+  }
+
+
+
+  .Polaris-ResourceItem__Container {
+    flex-direction: row-reverse;
+    padding: 1.2rem 1.2rem 0rem 2rem;
+  }
+
+  .Polaris-ResourceItem__Media {
+    margin-right: 0;
+  }
+
+  .store-info {
+    font-style: italic;
+    text-transform: capitalize;
+  }
+
+  .store-description--wrapper {
+
+    div {
+      padding: 0rem 2rem 1rem;
+    }
+  }
+
+  .icon-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    grid-gap: 5px;
+    align-content: start;
+    align-items: start;
+    justify-content: start;
+    justify-items: start;
+
+    &:not(:first-child){
+      margin-top: 10px;
+
+    }
+    
+    .Polaris-Icon {
+      margin: auto 0px;
+    }
+  }
+}

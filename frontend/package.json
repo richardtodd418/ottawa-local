@@ -1,0 +1,37 @@
+{
+  "name": "react-ott",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "main": "src/index.js",
+  "dependencies": {
+    "@apollo/react-hooks": "^3.1.5",
+    "@shopify/polaris": "4.18.0",
+    "@shopify/polaris-icons": "3.10.0",
+    "apollo-boost": "^0.1.16",
+    "apollo-client": "^2.4.2",
+    "graphql": "^15.0.0",
+    "graphql-tag": "^2.10.3",
+    "node-sass": "^4.13.1",
+    "react": "16.12.0",
+    "react-apollo": "^3.1.5",
+    "react-dom": "16.12.0",
+    "react-router-dom": "5.1.2",
+    "react-scripts": "^3.4.1"
+  },
+  "devDependencies": {
+    "typescript": "3.3.3"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}
