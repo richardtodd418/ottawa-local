@@ -34,48 +34,6 @@ const ALL_STORES_QUERY = gql`
   }
 `;
 
-const CREATE_STORE_MUTATION = gql`
-  mutation CREATE_STORE_MUTATION(
-    $name: String!
-    $category: String!
-    $type: String!
-    $url: String!
-    $primaryMethod: String!
-    $methodPhone: Boolean!
-    $methodOnline: Boolean!
-    $methodForm: Boolean!
-    $methodEmail: Boolean!
-    $email: String
-    $phone: String
-    $description: String
-    $delivery: Boolean!
-    $pickup: Boolean!
-    $invertedImage: Boolean!
-    $image: String
-  ) {
-    createStore(
-      name: $name
-      category: $category
-      type: $type
-      url: $url
-      primaryMethod: $primaryMethod
-      methodOnline: $methodOnline
-      methodForm: $methodForm
-      methodEmail: $methodEmail
-      methodPhone: $methodPhone
-      email: $email
-      phone: $phone
-      description: $description
-      delivery: $delivery
-      pickup: $pickup
-      invertedImage: $invertedImage
-      image: $image
-    ) {
-      id
-    }
-  }
-`;
-
 const App = () => {
   const { loading, error, data } = useQuery(ALL_STORES_QUERY);
   // using local data for stores

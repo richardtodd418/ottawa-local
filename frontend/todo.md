@@ -1,9 +1,11 @@
 - [ ] Sorting of stores
 - [ ] Favourites
-- [ ] GraphQL
+- [x] GraphQL
 - [ ] Tags
 - [x] Inverted images
-
-
-
-Add proptypes for store
+- [ ] Add proptypes for store
+- [ ] Better messages for server side validation
+- [ ] Preview on store form
+- [ ] Phone needs to show if there is a valid phone number
+- [ ] Remove client errors on succesful submission
+- [ ] Update store (in addition to adding store)

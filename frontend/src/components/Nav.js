@@ -1,7 +1,7 @@
 import React from 'react';
-import { DisplayText } from '@shopify/polaris';
+import { DisplayText, Icon } from '@shopify/polaris';
 import { NavLink } from 'react-router-dom';
-
+import { StoreMajorMonotone } from '@shopify/polaris-icons';
 const Nav = (props) => {
   const { uniqueCategories } = props;
   const activeNavStyle = {
@@ -30,7 +30,7 @@ const Nav = (props) => {
           );
         })}
         <NavLink to='/addstore' activeStyle={activeNavStyle}>
-          Add store
+          <Icon source={StoreMajorMonotone} />
         </NavLink>
       </ul>
     </nav>
