@@ -102,19 +102,20 @@ const ClientErrors = ({ error }) => {
 };
 
 const StoreForm = (props) => {
-  const [name, updateName] = useState();
-  const [category, updateCategory] = useState();
-  const [type, updateType] = useState();
-  const [url, updateURL] = useState();
+  // form state
+  const [name, updateName] = useState('');
+  const [description, updateDescription] = useState('');
+  const [category, updateCategory] = useState('');
+  const [type, updateType] = useState('');
   const [primaryMethod, updatePrimaryMethod] = useState();
   const [selectedMethod, updatedSelectedMethod] = useState([]);
-  const [email, updateEmail] = useState('');
-  const [phone, updatePhone] = useState('');
-  const [description, updateDescription] = useState('');
   const [delivery, updateDelivery] = useState();
   const [pickup, updatePickup] = useState();
-  const [invertedImage, updateInvertedImage] = useState(false);
+  const [url, updateURL] = useState('');
+  const [email, updateEmail] = useState('');
+  const [phone, updatePhone] = useState('');
   const [image, updateImage] = useState('');
+  const [invertedImage, updateInvertedImage] = useState(false);
   const [clientErrors, updateClientErrors] = useState([]);
 
   const [methodForm] = useState(selectedMethod.includes('form'));
@@ -125,6 +126,15 @@ const StoreForm = (props) => {
     createStore,
     { loading: mutationLoading, error: mutationError },
   ] = useMutation(CREATE_STORE_MUTATION);
+
+  // validation state
+  const [nameError, updateNameError] = useState(false);
+  const [categoryError, updateCategoryError] = useState(false);
+  const [typeError, updateTypeError] = useState(false);
+  const [primaryMethodError, updatePrimaryMethodError] = useState(false);
+  const [deliveryError, updateDeliveryError] = useState(false);
+  const [pickupError, updatePickupError] = useState(false);
+  const [urlError, updateUrlError] = useState(false);
 
   // options
   const categoryOptions = [
@@ -179,7 +189,6 @@ const StoreForm = (props) => {
   ];
 
   // handlers
-
   const handleSubmit = (_event) => {
     // handle submission
 
@@ -198,16 +207,31 @@ const StoreForm = (props) => {
     const errorTitles = {
       name: 'Store name',
       category: 'Store category',
-      type: 'Store Type',
+      type: 'Store type',
       primaryMethod: 'Primary shopping method',
       delivery: 'Home delivery',
       pickup: 'Curbside pickup',
       url: 'Website URL',
     };
 
+    const inlineErrorUpdaters = {
+      name: updateNameError,
+      category: updateCategoryError,
+      type: updateTypeError,
+      primaryMethod: updatePrimaryMethodError,
+      delivery: updateDeliveryError,
+      pickup: updatePickupError,
+      url: updateUrlError,
+    };
+
     for (const property in required) {
       if (required[property] == null || required[property] === '') {
+        // create array of fields with errors
         errorArray.push(errorTitles[property]);
+        // update inline errors for required fields
+        if (inlineErrorUpdaters[property] != null) {
+          inlineErrorUpdaters[property](true);
+        }
       }
     }
 
@@ -226,17 +250,27 @@ const StoreForm = (props) => {
           email,
           phone,
           description,
-          delivery,
-          pickup,
+          delivery: delivery === 'yes' ? true : false,
+          pickup: pickup === 'yes' ? true : false,
           invertedImage,
           image,
         },
       });
-    } else {
-      updateClientErrors(errorArray);
+    }
+    updateClientErrors(errorArray);
+  };
+
+  const validateOnChange = (updater, value) => {
+    if (value.trim().length > 0) {
+      updater(false);
     }
   };
-  const handleNameChange = useCallback((value) => updateName(value), [name]);
+
+  const handleNameChange = useCallback((value) => {
+    updateName(value);
+    validateOnChange(updateNameError, value);
+  }, []);
+
   const handleDescriptionChange = useCallback(
     (value) => updateDescription(value),
     [],
@@ -246,31 +280,39 @@ const StoreForm = (props) => {
     (value) => {
       updateCategory(value);
       updateType('');
+      validateOnChange(updateCategoryError, value);
+      validateOnChange(updateTypeError, value);
     },
 
     [],
   );
-  const handleTypeChange = useCallback((value) => updateType(value), []);
-  const handleURLChange = useCallback((value) => updateURL(value), []);
-  const handlePrimaryMethodSelectChange = useCallback(
-    (value) => updatePrimaryMethod(value),
-    [],
-  );
+
+  const handleTypeChange = useCallback((value) => {
+    updateType(value);
+    validateOnChange(updateTypeError, value);
+  }, []);
+
+  const handlePrimaryMethodSelectChange = useCallback((value) => {
+    updatePrimaryMethod(value);
+    validateOnChange(updatePrimaryMethodError, value);
+  }, []);
   const handleMethodChange = useCallback(
     (value) => updatedSelectedMethod(value),
     [],
   );
 
-  const handleDeliverySelectChange = useCallback(
-    (value) => updateDelivery(value),
-    [],
-  );
+  const handleDeliverySelectChange = useCallback((value) => {
+    updateDelivery(value);
+    validateOnChange(updateDeliveryError, value);
+  }, []);
 
-  const handlePickupSelectChange = useCallback(
-    (value) => updatePickup(value),
-    [],
-  );
-
+  const handlePickupSelectChange = useCallback((value) => {
+    updatePickup(value);
+    validateOnChange(updatePickupError, value);
+  }, []);
+  const handleURLChange = useCallback((value) => {
+    updateURL(value), validateOnChange(updateUrlError, value);
+  }, []);
   const handleEmailChange = useCallback((value) => updateEmail(value), []);
   const handlePhoneChange = useCallback((value) => updatePhone(value), []);
   const handleImageChange = useCallback((value) => updateImage(value), []);
@@ -279,169 +321,193 @@ const StoreForm = (props) => {
     [],
   );
 
-  return (
-    <>
-      <Form onSubmit={handleSubmit}>
-        {mutationLoading && <Loading />}
-        <FormLayout>
-          <ServerErrors error={mutationError} />
-          <ClientErrors error={clientErrors} />
-          <Heading>Add a store</Heading>
-          <TextField
-            label='Store name'
-            onChange={handleNameChange}
-            value={name}
-            type='text'
-            placeholder='Store name'
-            labelHidden
-            required
-          />
-          <TextField
-            label='Description'
-            onChange={handleDescriptionChange}
-            value={description}
-            type='text'
-            multiline={3}
-            placeholder='Enter a short description of the store (optional)'
-            labelHidden
-          />
-          <FormLayout.Group>
-            <Select
-              label='Category'
-              options={categoryOptions}
-              onChange={handleCategorySelectChange}
-              value={category}
-              placeholder='Choose store category'
-              labelHidden
-            />
-            <Select
-              label='Tags'
-              options={typeOptions}
-              onChange={handleTypeChange}
-              value={type}
-              labelHidden
-              placeholder='Choose store type'
-            />
-          </FormLayout.Group>
-          <Select
-            label='Primary method'
-            options={primaryMethodOptions}
-            onChange={handlePrimaryMethodSelectChange}
-            value={primaryMethod}
-            placeholder='Choose the primary shopping method'
-            labelHidden
-          />
-          <ChoiceList
-            allowMultiple
-            title='Available shopping methods'
-            choices={primaryMethodOptions}
-            selected={selectedMethod}
-            onChange={handleMethodChange}
-          />
-          <FormLayout.Group>
-            <Select
-              label='Delivery'
-              options={shippingOptions}
-              onChange={handleDeliverySelectChange}
-              value={delivery}
-              placeholder='Home delivery'
-              labelHidden
-            />
-            <Select
-              label='Pickup'
-              options={shippingOptions}
-              onChange={handlePickupSelectChange}
-              value={pickup}
-              placeholder='Curbside pickup'
-              labelHidden
-              required
-            />
-          </FormLayout.Group>
-          <TextField
-            label='URL'
-            onChange={handleURLChange}
-            value={url}
-            type='text'
-            placeholder='Website URL'
-            labelHidden
-          />
-          <FormLayout.Group>
-            <TextField
-              label='Email'
-              onChange={handleEmailChange}
-              value={email}
-              type='email'
-              placeholder='Store email address (optional)'
-              labelHidden
-            />
-            <TextField
-              label='Phone number'
-              onChange={handlePhoneChange}
-              value={phone}
-              type='text'
-              placeholder='Store phone number (optional)'
-              labelHidden
-            />
-          </FormLayout.Group>
-          <FormLayout.Group>
-            <TextField
-              label='Image URL'
-              onChange={handleImageChange}
-              value={image}
-              type='text'
-              placeholder='Store logo url (optional)'
-              labelHidden
-              helpText='Enter the URL of the image to use as the store logo'
-            />
-            <Checkbox
-              label='Inverted image'
-              checked={invertedImage}
-              onChange={handleInvertedImagedChange}
-              helpText='Check if the logo image uses a white image on a transparent background'
-            />
-          </FormLayout.Group>
-          <Button submit disabled={mutationLoading} aria-busy={mutationLoading}>
-            {mutationLoading ? (
-              <Spinner
-                accessibilityLabel='Spinner example'
-                size='small'
-                color='teal'
-              />
-            ) : (
-              'Submit'
-            )}
-          </Button>
-        </FormLayout>
+  // validation
 
+  const validateOnBlur = (value, errorUpdater) => {
+    // check if name is valid
+    if (!value || value.trim().length === 0) {
+      errorUpdater(true);
+    } else {
+      errorUpdater(false);
+    }
+  };
+
+  return (
+    <Form onSubmit={handleSubmit} implicitSubmit={false}>
+      {mutationLoading && <Loading />}
+      <FormLayout>
+        <ServerErrors error={mutationError} />
+        <ClientErrors error={clientErrors} />
+        <Heading>Add a store</Heading>
+        <TextField
+          label='Store name'
+          onChange={handleNameChange}
+          value={name}
+          type='text'
+          placeholder='Store name'
+          labelHidden
+          required
+          id='storeName'
+          error={nameError ? 'Store name is required' : ''}
+          // onBlur={() => validateOnBlur(name, updateNameError)}
+        />
+
+        <TextField
+          label='Description'
+          onChange={handleDescriptionChange}
+          value={description}
+          type='text'
+          multiline={3}
+          placeholder='Enter a short description of the store (optional)'
+          labelHidden
+        />
         <FormLayout.Group>
-          <span></span>
-          <>
-            <Heading>Preview</Heading>
-            <Store
-              store={{
-                name,
-                category,
-                type,
-                description,
-                url,
-                primaryMethod,
-                methodOnline,
-                methodForm,
-                methodEmail,
-                methodPhone,
-                image,
-                invertedImage,
-                delivery,
-                pickup,
-                phone,
-                email,
-              }}
-            />
-          </>
-          <span></span>
+          <Select
+            label='Category'
+            options={categoryOptions}
+            onChange={handleCategorySelectChange}
+            value={category}
+            placeholder='Choose store category'
+            labelHidden
+            error={categoryError ? 'Category is required' : ''}
+            // onBlur={() => validateOnBlur(category, updateCategoryError)}
+          />
+          <Select
+            label='Type'
+            options={typeOptions}
+            onChange={handleTypeChange}
+            value={type}
+            labelHidden
+            placeholder='Choose store type'
+            error={typeError ? 'Type is required' : ''}
+            // onBlur={() => validateOnBlur(type, updateTypeError)}
+          />
         </FormLayout.Group>
-      </Form>
-    </>
+        <Select
+          label='Primary method'
+          options={primaryMethodOptions}
+          onChange={handlePrimaryMethodSelectChange}
+          value={primaryMethod}
+          placeholder='Choose the primary shopping method'
+          labelHidden
+          error={primaryMethodError ? 'Primary shpping method is required' : ''}
+          // onBlur={() => validateOnBlur(primaryMethod, updatePrimaryMethodError)}
+        />
+        <ChoiceList
+          allowMultiple
+          title='Available shopping methods'
+          choices={primaryMethodOptions}
+          selected={selectedMethod}
+          onChange={handleMethodChange}
+        />
+        <FormLayout.Group>
+          <Select
+            label='Delivery'
+            options={shippingOptions}
+            onChange={handleDeliverySelectChange}
+            value={delivery}
+            placeholder='Home delivery'
+            labelHidden
+            error={deliveryError ? 'Delivery availabilty required' : ''}
+            // onBlur={() => validateOnBlur(delivery, updateDeliveryError)}
+          />
+          <Select
+            label='Pickup'
+            options={shippingOptions}
+            onChange={handlePickupSelectChange}
+            value={pickup}
+            placeholder='Curbside pickup'
+            labelHidden
+            error={pickupError ? 'Pickup availabilty required' : ''}
+            // onBlur={() => validateOnBlur(pickup, updatePickupError)}
+          />
+        </FormLayout.Group>
+        <TextField
+          label='URL'
+          onChange={handleURLChange}
+          value={url}
+          type='url'
+          placeholder='Website URL'
+          labelHidden
+          error={urlError ? 'Website URL required' : ''}
+          // onBlur={() => validateOnBlur(url, updateUrlError)}
+        />
+        <FormLayout.Group>
+          <TextField
+            label='Email'
+            onChange={handleEmailChange}
+            value={email}
+            type='email'
+            placeholder='Store email address (optional)'
+            labelHidden
+          />
+          <TextField
+            label='Phone number'
+            onChange={handlePhoneChange}
+            value={phone}
+            type='tel'
+            placeholder='Store phone number (optional)'
+            labelHidden
+          />
+        </FormLayout.Group>
+        <FormLayout.Group>
+          <TextField
+            label='Image URL'
+            onChange={handleImageChange}
+            value={image}
+            type='text'
+            placeholder='Store logo url (optional)'
+            labelHidden
+            helpText='Enter the URL of the image to use as the store logo'
+          />
+          <Checkbox
+            label='Inverted image'
+            checked={invertedImage}
+            onChange={handleInvertedImagedChange}
+            helpText='Check if the logo image uses a white image on a transparent background'
+          />
+        </FormLayout.Group>
+        <Button submit disabled={mutationLoading} aria-busy={mutationLoading}>
+          {mutationLoading ? (
+            <Spinner
+              accessibilityLabel='Spinner example'
+              size='small'
+              color='teal'
+            />
+          ) : (
+            'Submit'
+          )}
+        </Button>
+      </FormLayout>
+
+      <FormLayout.Group>
+        <span></span>
+        <>
+          <Heading>Preview</Heading>
+          <Store
+            store={{
+              name,
+              category,
+              type,
+              description,
+              url,
+              primaryMethod,
+              methodOnline,
+              methodForm,
+              methodEmail,
+              methodPhone,
+              image,
+              invertedImage,
+              delivery: delivery === 'yes' ? true : false,
+              pickup: pickup === 'yes' ? true : false,
+              phone,
+              email,
+            }}
+          />
+        </>
+        <span></span>
+      </FormLayout.Group>
+    </Form>
   );
 };
 export default StoreForm;
