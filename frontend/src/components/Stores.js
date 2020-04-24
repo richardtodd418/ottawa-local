@@ -4,7 +4,6 @@ import Store from './Store';
 
 const Stores = (props) => {
   const [catStores] = useState(props.stores);
-console.log(catStores);
   return (
       <Layout>
         {catStores.map((store, index) => (

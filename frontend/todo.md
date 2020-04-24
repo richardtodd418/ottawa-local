@@ -1,8 +1,13 @@
+## Global#
+- [ ] Title
+- [ ] Put footer at very bottom
+
 ## Stores page
 - [ ] Bottom align the Visit Site on the store cards
 - [ ] Favourites
 - [ ] Sorting of stores
 - [ ] Update stores
+
 
 
 
@@ -12,14 +17,13 @@
 - [x] GraphQL
 - [x] Inverted images
 - [x] Remove client errors on succesful submission
-- [ ] Update store (in addition to adding store) - so no need to refresh
-- [ ] Clear form after submission
-- [ ] Add labels as fields aren't obvious as to their content
-- [ ] Success message on submission (Toast)
+- [x] Add labels as fields aren'ts obvious as to their content
+- [x] Clear form after submission
+- [x] Success message on submission (Toast)
+- [x] Individual field validation for required fields
 - [ ] Remove submit on enter
-- [ ] Individual field validation for required fields
-- [ ] Don't validate when tabbing through fields if they are empty?
 - [ ] Validate URL and Emails to match regex patterns
+- [ ] Update store (in addition to adding store) - so no need to refresh
 
 ### Nice to haves
 - [x] Preview on store form
@@ -29,3 +33,8 @@
 - [ ] Tags
 
 
+
+
+## DB
+
+- [ ] Is types a protected field, as I can't edit it in Primsa

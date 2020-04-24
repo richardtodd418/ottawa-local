@@ -19,8 +19,28 @@ type Mutation {
     invertedImage: Boolean
     image: String
   ): Store!
+  updateStore(
+    id: ID!
+    name: String
+    category: String
+    type: String
+    url: String
+    primaryMethod: String
+    methodOnline: Boolean
+    methodForm: Boolean
+    methodEmail: Boolean
+    methodPhone: Boolean
+    email: String
+    phone: String
+    description: String
+    delivery: Boolean
+    pickup: Boolean
+    invertedImage: Boolean
+    image: String
+  ): Store!
 }
 
 type Query {
   stores: [Store]!
+  store(where: StoreWhereUniqueInput!): Store
 }

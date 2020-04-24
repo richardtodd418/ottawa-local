@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+
 import {
   Layout,
   Card,
@@ -19,10 +21,11 @@ import {
   EmailMajorMonotone,
   PhoneMajorMonotone,
   StoreMajorMonotone,
+  EditMajorMonotone,
 } from '@shopify/polaris-icons';
 
-const StoreFooter = (props) => {
-  const { url, primaryMethod, pickup, delivery, phone } = props.store;
+const StoreFooter = ({ store }) => {
+  const { url, primaryMethod, pickup, delivery, phone, id } = store;
   const icons = {
     phone: PhoneMajorMonotone,
     email: EmailMajorMonotone,
@@ -56,17 +59,30 @@ const StoreFooter = (props) => {
         </span>
       </Card.Section>
       <Card.Section>
-        <Link external monochrome url={url}>
-          Visit site
-        </Link>{' '}
-        {primaryMethod === 'phone' && (
-          <>
-            or{' '}
-            <Link external monochrome url={`tel:${phone}`}>
-              Call
-            </Link>
-          </>
-        )}
+        <span className='store-card--footer'>
+          <span>
+            <Link external monochrome url={url}>
+              Visit site
+            </Link>{' '}
+            {primaryMethod === 'phone' && (
+              <span>
+                or{' '}
+                <Link external monochrome url={`tel:${phone}`}>
+                  Call
+                </Link>
+              </span>
+            )}
+          </span>
+          <RouterLink
+            to={{
+              pathname: '/updatestore/',
+              search: `?id=${id}`,
+              state: { storeId: `${id}`, store },
+            }}
+          >
+            <Icon source={EditMajorMonotone} />
+          </RouterLink>
+        </span>
       </Card.Section>
     </>
   );

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation } from '@apollo/react-hooks';
+import React from 'react';
+import { useQuery } from '@apollo/react-hooks';
 import { gql } from 'apollo-boost';
-import { Layout, FooterHelp, DisplayText, Page } from '@shopify/polaris';
+import { Layout, FooterHelp,  Page } from '@shopify/polaris';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 // import storesList from "../data/stores";
 import Stores from './Stores';
-import StoreForm from './StoreForm';
+import AddStoreForm from './AddStoreForm';
+import UpdateStoreForm from './UpdateStoreForm';
 
 import Nav from './Nav';
 import '../styles/styles.scss';
@@ -30,6 +31,7 @@ const ALL_STORES_QUERY = gql`
       pickup
       phone
       email
+      id
     }
   }
 `;
@@ -70,7 +72,10 @@ const App = () => {
               </Route>
             ))}
             <Route path='/addstore'>
-              <StoreForm store={false} />
+              <AddStoreForm store={false} />
+            </Route>
+            <Route path='/updatestore/'>
+              <UpdateStoreForm />
             </Route>
             <Route path='/'>
               <Stores stores={sortedStores} />

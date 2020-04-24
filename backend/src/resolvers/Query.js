@@ -6,6 +6,7 @@ const Query = {
   //   const stores = await ctx.db.query.stores();
   //   return stores;
   // }
+  store: forwardTo('db'),
 };
 
 module.exports = Query;

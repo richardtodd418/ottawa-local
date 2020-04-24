@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { useMutation } from '@apollo/react-hooks';
+import { useMutation, useQuery } from '@apollo/react-hooks';
+import { useLocation } from 'react-router-dom';
 import { gql } from 'apollo-boost';
 import {
   Form,
@@ -13,12 +14,37 @@ import {
   Banner,
   Spinner,
   Loading,
+  Toast,
 } from '@shopify/polaris';
 
 import Store from './Store';
+// XXX Query for getting store info - could just use state on location passed through router
 
-const CREATE_STORE_MUTATION = gql`
-  mutation CREATE_STORE_MUTATION(
+const SINGLE_STORE_QUERY = gql`
+  query SINGLE_STORE_QUERY($id: ID!) {
+    store(where: { id: $id }) {
+      name
+      category
+      type
+      url
+      primaryMethod
+      methodOnline
+      methodForm
+      methodEmail
+      methodPhone
+      email
+      phone
+      description
+      delivery
+      pickup
+      invertedImage
+      image
+    }
+  }
+`;
+
+const UPDATE_STORE_MUTATION = gql`
+  mutation UPDATE_STORE_MUTATION(
     $name: String!
     $category: String!
     $type: String!
@@ -36,7 +62,7 @@ const CREATE_STORE_MUTATION = gql`
     $invertedImage: Boolean!
     $image: String
   ) {
-    createStore(
+    updateStore(
       name: $name
       category: $category
       type: $type
@@ -74,11 +100,7 @@ const ServerErrors = ({ error }) => {
       <li>{error.message.replace('GraphQL error: ', '')}</li>
     );
   return (
-    <Banner
-      title='High risk of fraud detected'
-      action={{ content: 'Review risk analysis' }}
-      status='critical'
-    >
+    <Banner title='Server error' status='critical'>
       <ul>{errorMarkup}</ul>
     </Banner>
   );
@@ -101,7 +123,12 @@ const ClientErrors = ({ error }) => {
   );
 };
 
-const StoreForm = (props) => {
+const UpdateStoreForm = (props) => {
+  // route state
+  const location = useLocation();
+  const { storeId, store } = location.state;
+  console.log({ storeId, store });
+
   // form state
   const [name, updateName] = useState('');
   const [description, updateDescription] = useState('');
@@ -111,21 +138,33 @@ const StoreForm = (props) => {
   const [selectedMethod, updatedSelectedMethod] = useState([]);
   const [delivery, updateDelivery] = useState();
   const [pickup, updatePickup] = useState();
-  const [url, updateURL] = useState('');
+  const [url, updateURL] = useState('https://www.website.com');
   const [email, updateEmail] = useState('');
   const [phone, updatePhone] = useState('');
   const [image, updateImage] = useState('');
   const [invertedImage, updateInvertedImage] = useState(false);
   const [clientErrors, updateClientErrors] = useState([]);
-
   const [methodForm] = useState(selectedMethod.includes('form'));
   const [methodEmail] = useState(selectedMethod.includes('email'));
   const [methodPhone] = useState(selectedMethod.includes('phone'));
   const [methodOnline] = useState(selectedMethod.includes('online'));
+  const [toastActive, setToastActive] = useState(false);
+
+  // gql
   const [
-    createStore,
-    { loading: mutationLoading, error: mutationError },
-  ] = useMutation(CREATE_STORE_MUTATION);
+    updateStore,
+    { loading: mutationLoading, error: mutationError, data: mutationData },
+  ] = useMutation(UPDATE_STORE_MUTATION);
+
+  // XXX get store from DB (alterative is to use state)
+  const {
+    loading: queryLoading,
+    error: queryError,
+    data: queryData,
+  } = useQuery(SINGLE_STORE_QUERY, {
+    variables: { id: storeId },
+  });
+  queryData && console.log(queryData);
 
   // validation state
   const [nameError, updateNameError] = useState(false);
@@ -188,77 +227,28 @@ const StoreForm = (props) => {
     { label: 'No', value: 'no' },
   ];
 
-  // handlers
-  const handleSubmit = (_event) => {
-    // handle submission
-
-    // check for require fields
-    const required = {
-      name,
-      category,
-      type,
-      primaryMethod,
-      delivery,
-      pickup,
-      url,
-    };
-    let errorArray = [];
-
-    const errorTitles = {
-      name: 'Store name',
-      category: 'Store category',
-      type: 'Store type',
-      primaryMethod: 'Primary shopping method',
-      delivery: 'Home delivery',
-      pickup: 'Curbside pickup',
-      url: 'Website URL',
-    };
-
-    const inlineErrorUpdaters = {
-      name: updateNameError,
-      category: updateCategoryError,
-      type: updateTypeError,
-      primaryMethod: updatePrimaryMethodError,
-      delivery: updateDeliveryError,
-      pickup: updatePickupError,
-      url: updateUrlError,
-    };
-
-    for (const property in required) {
-      if (required[property] == null || required[property] === '') {
-        // create array of fields with errors
-        errorArray.push(errorTitles[property]);
-        // update inline errors for required fields
-        if (inlineErrorUpdaters[property] != null) {
-          inlineErrorUpdaters[property](true);
-        }
-      }
-    }
-
-    if (errorArray.length === 0) {
-      createStore({
-        variables: {
-          name,
-          category,
-          type,
-          url,
-          primaryMethod,
-          methodOnline,
-          methodForm,
-          methodEmail,
-          methodPhone,
-          email,
-          phone,
-          description,
-          delivery: delivery === 'yes' ? true : false,
-          pickup: pickup === 'yes' ? true : false,
-          invertedImage,
-          image,
-        },
-      });
-    }
-    updateClientErrors(errorArray);
+  // helpers
+  const clearForm = () => {
+    updateName('');
+    updateDescription('');
+    updateCategory('');
+    updateType('');
+    updatePrimaryMethod();
+    updatedSelectedMethod([]);
+    updateDelivery();
+    updatePickup();
+    updateURL('');
+    updateEmail('');
+    updatePhone('');
+    updateImage('');
+    updateInvertedImage(false);
   };
+
+  // handlers
+  const toggleToastActive = useCallback(
+    () => setToastActive((active) => !active),
+    [],
+  );
 
   const validateOnChange = (updater, value) => {
     if (value.trim().length > 0) {
@@ -321,8 +311,90 @@ const StoreForm = (props) => {
     [],
   );
 
-  // validation
+  const handleSubmit = async (_event) => {
+    // check for required fields
+    const required = {
+      name,
+      category,
+      type,
+      primaryMethod,
+      delivery,
+      pickup,
+      url,
+    };
+    let errorArray = [];
 
+    const errorTitles = {
+      name: 'Store name',
+      category: 'Store category',
+      type: 'Store type',
+      primaryMethod: 'Primary shopping method',
+      delivery: 'Home delivery',
+      pickup: 'Curbside pickup',
+      url: 'Website URL',
+    };
+
+    const inlineErrorUpdaters = {
+      name: updateNameError,
+      category: updateCategoryError,
+      type: updateTypeError,
+      primaryMethod: updatePrimaryMethodError,
+      delivery: updateDeliveryError,
+      pickup: updatePickupError,
+      url: updateUrlError,
+    };
+
+    for (const property in required) {
+      if (required[property] == null || required[property] === '') {
+        // create array of fields with errors
+        errorArray.push(errorTitles[property]);
+        // update inline errors for required fields
+        if (inlineErrorUpdaters[property] != null) {
+          inlineErrorUpdaters[property](true);
+        }
+      }
+    }
+
+    const variables = {
+      name,
+      category,
+      type,
+      url,
+      primaryMethod,
+      methodOnline,
+      methodForm,
+      methodEmail,
+      methodPhone,
+      email,
+      phone,
+      description,
+      delivery: delivery === 'yes' ? true : false,
+      pickup: pickup === 'yes' ? true : false,
+      invertedImage,
+      image,
+    };
+
+    updateClientErrors(errorArray);
+
+    if (errorArray.length === 0) {
+      const store = await updateStore({
+        variables,
+      });
+      // reset form fields
+      console.log(store.data);
+      if (store.data) {
+        toggleToastActive();
+      }
+      clearForm();
+    }
+  };
+
+  // markup
+  const toastMarkup = toastActive ? (
+    <Toast content='Store added' onDismiss={toggleToastActive} />
+  ) : null;
+
+  // validation
   const validateOnBlur = (value, errorUpdater) => {
     // check if name is valid
     if (!value || value.trim().length === 0) {
@@ -336,8 +408,8 @@ const StoreForm = (props) => {
     <Form onSubmit={handleSubmit} implicitSubmit={false}>
       {mutationLoading && <Loading />}
       <FormLayout>
-        <ServerErrors error={mutationError} />
         <ClientErrors error={clientErrors} />
+        {mutationError && <ServerErrors error={mutationError} />}
         <Heading>Add a store</Heading>
         <TextField
           label='Store name'
@@ -349,7 +421,7 @@ const StoreForm = (props) => {
           required
           id='storeName'
           error={nameError ? 'Store name is required' : ''}
-          // onBlur={() => validateOnBlur(name, updateNameError)}
+          onBlur={() => validateOnBlur(name, updateNameError)}
         />
 
         <TextField
@@ -363,63 +435,65 @@ const StoreForm = (props) => {
         />
         <FormLayout.Group>
           <Select
-            label='Category'
+            label='Store category'
             options={categoryOptions}
             onChange={handleCategorySelectChange}
             value={category}
             placeholder='Choose store category'
-            labelHidden
             error={categoryError ? 'Category is required' : ''}
-            // onBlur={() => validateOnBlur(category, updateCategoryError)}
+            onBlur={() => validateOnBlur(category, updateCategoryError)}
           />
           <Select
-            label='Type'
+            label='Store type'
             options={typeOptions}
             onChange={handleTypeChange}
             value={type}
-            labelHidden
             placeholder='Choose store type'
             error={typeError ? 'Type is required' : ''}
-            // onBlur={() => validateOnBlur(type, updateTypeError)}
+            onBlur={() => validateOnBlur(type, updateTypeError)}
           />
         </FormLayout.Group>
-        <Select
-          label='Primary method'
-          options={primaryMethodOptions}
-          onChange={handlePrimaryMethodSelectChange}
-          value={primaryMethod}
-          placeholder='Choose the primary shopping method'
-          labelHidden
-          error={primaryMethodError ? 'Primary shpping method is required' : ''}
-          // onBlur={() => validateOnBlur(primaryMethod, updatePrimaryMethodError)}
-        />
-        <ChoiceList
-          allowMultiple
-          title='Available shopping methods'
-          choices={primaryMethodOptions}
-          selected={selectedMethod}
-          onChange={handleMethodChange}
-        />
         <FormLayout.Group>
           <Select
-            label='Delivery'
+            label='Primary shopping method'
+            options={primaryMethodOptions}
+            onChange={handlePrimaryMethodSelectChange}
+            value={primaryMethod}
+            placeholder='Choose the primary shopping method'
+            error={
+              primaryMethodError ? 'Primary shpping method is required' : ''
+            }
+            onBlur={() =>
+              validateOnBlur(primaryMethod, updatePrimaryMethodError)
+            }
+          />
+          <ChoiceList
+            allowMultiple
+            title='Available shopping methods'
+            choices={primaryMethodOptions}
+            selected={selectedMethod}
+            onChange={handleMethodChange}
+          />
+        </FormLayout.Group>
+
+        <FormLayout.Group>
+          <Select
+            label='Home delivery'
             options={shippingOptions}
             onChange={handleDeliverySelectChange}
             value={delivery}
-            placeholder='Home delivery'
-            labelHidden
+            placeholder='Make a selection'
             error={deliveryError ? 'Delivery availabilty required' : ''}
-            // onBlur={() => validateOnBlur(delivery, updateDeliveryError)}
+            onBlur={() => validateOnBlur(delivery, updateDeliveryError)}
           />
           <Select
-            label='Pickup'
+            label='Curbside pickup'
             options={shippingOptions}
             onChange={handlePickupSelectChange}
             value={pickup}
-            placeholder='Curbside pickup'
-            labelHidden
+            placeholder='Make a selection'
             error={pickupError ? 'Pickup availabilty required' : ''}
-            // onBlur={() => validateOnBlur(pickup, updatePickupError)}
+            onBlur={() => validateOnBlur(pickup, updatePickupError)}
           />
         </FormLayout.Group>
         <TextField
@@ -430,7 +504,7 @@ const StoreForm = (props) => {
           placeholder='Website URL'
           labelHidden
           error={urlError ? 'Website URL required' : ''}
-          // onBlur={() => validateOnBlur(url, updateUrlError)}
+          onBlur={() => validateOnBlur(url, updateUrlError)}
         />
         <FormLayout.Group>
           <TextField
@@ -507,7 +581,9 @@ const StoreForm = (props) => {
         </>
         <span></span>
       </FormLayout.Group>
+      {toastMarkup}
     </Form>
   );
 };
-export default StoreForm;
+export default UpdateStoreForm;
+export { UPDATE_STORE_MUTATION };
