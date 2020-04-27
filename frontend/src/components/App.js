@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@apollo/react-hooks';
 import { gql } from 'apollo-boost';
-import { Layout, FooterHelp,  Page } from '@shopify/polaris';
+import { Layout, FooterHelp,  Page, Loading } from '@shopify/polaris';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 // import storesList from "../data/stores";
 import Stores from './Stores';
@@ -44,7 +44,7 @@ const App = () => {
     return stores.filter((store) => store.category === category);
   };
 
-  if (loading) return <h1>Loading...</h1>;
+  if (loading) return <Loading/>;
   if (error) return <h1>Error...</h1>;
   const { stores } = data;
   const sortedStores = stores.sort((a, b) => {

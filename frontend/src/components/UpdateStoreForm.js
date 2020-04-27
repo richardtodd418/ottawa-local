@@ -100,7 +100,7 @@ const ServerErrors = ({ error }) => {
       <li>{error.message.replace('GraphQL error: ', '')}</li>
     );
   return (
-    <Banner title='Server error' status='critical'>
+    <Banner title="Server error" status="critical">
       <ul>{errorMarkup}</ul>
     </Banner>
   );
@@ -112,7 +112,7 @@ const ClientErrors = ({ error }) => {
   return (
     <Banner
       title={`To add this store, ${error.length} changes need to be made. Please fill out the following fields:`}
-      status='critical'
+      status="critical"
     >
       <ul>
         {error.map((err, index) => (
@@ -123,22 +123,33 @@ const ClientErrors = ({ error }) => {
   );
 };
 
-const UpdateStoreForm = (props) => {
+const UpdateStoreForm = () => {
   // route state
   const location = useLocation();
-  const { storeId, store } = location.state;
-  console.log({ storeId, store });
+  const { storeId } = location.state;
+  // gql
+  const [
+    updateStore,
+    { loading: mutationLoading, error: mutationError, data: mutationData },
+  ] = useMutation(UPDATE_STORE_MUTATION);
 
+  // XXX get store from DB (alterative is to use state)
+  const { loading: queryLoading, data: queryData } = useQuery(
+    SINGLE_STORE_QUERY,
+    {
+      variables: { id: storeId },
+    },
+  );
   // form state
   const [name, updateName] = useState('');
   const [description, updateDescription] = useState('');
   const [category, updateCategory] = useState('');
   const [type, updateType] = useState('');
-  const [primaryMethod, updatePrimaryMethod] = useState();
+  const [primaryMethod, updatePrimaryMethod] = useState('');
   const [selectedMethod, updatedSelectedMethod] = useState([]);
   const [delivery, updateDelivery] = useState();
   const [pickup, updatePickup] = useState();
-  const [url, updateURL] = useState('https://www.website.com');
+  const [url, updateURL] = useState('');
   const [email, updateEmail] = useState('');
   const [phone, updatePhone] = useState('');
   const [image, updateImage] = useState('');
@@ -149,22 +160,6 @@ const UpdateStoreForm = (props) => {
   const [methodPhone] = useState(selectedMethod.includes('phone'));
   const [methodOnline] = useState(selectedMethod.includes('online'));
   const [toastActive, setToastActive] = useState(false);
-
-  // gql
-  const [
-    updateStore,
-    { loading: mutationLoading, error: mutationError, data: mutationData },
-  ] = useMutation(UPDATE_STORE_MUTATION);
-
-  // XXX get store from DB (alterative is to use state)
-  const {
-    loading: queryLoading,
-    error: queryError,
-    data: queryData,
-  } = useQuery(SINGLE_STORE_QUERY, {
-    variables: { id: storeId },
-  });
-  queryData && console.log(queryData);
 
   // validation state
   const [nameError, updateNameError] = useState(false);
@@ -214,6 +209,7 @@ const UpdateStoreForm = (props) => {
   };
 
   const typeOptions = typesObject[category];
+  const getTypeOptions = (cat) => typesObject[cat];
 
   const primaryMethodOptions = [
     { label: 'Email', value: 'email' },
@@ -301,7 +297,8 @@ const UpdateStoreForm = (props) => {
     validateOnChange(updatePickupError, value);
   }, []);
   const handleURLChange = useCallback((value) => {
-    updateURL(value), validateOnChange(updateUrlError, value);
+    updateURL(value);
+    validateOnChange(updateUrlError, value);
   }, []);
   const handleEmailChange = useCallback((value) => updateEmail(value), []);
   const handlePhoneChange = useCallback((value) => updatePhone(value), []);
@@ -311,7 +308,7 @@ const UpdateStoreForm = (props) => {
     [],
   );
 
-  const handleSubmit = async (_event) => {
+  const handleSubmit = async () => {
     // check for required fields
     const required = {
       name,
@@ -322,7 +319,7 @@ const UpdateStoreForm = (props) => {
       pickup,
       url,
     };
-    let errorArray = [];
+    const errorArray = [];
 
     const errorTitles = {
       name: 'Store name',
@@ -368,8 +365,8 @@ const UpdateStoreForm = (props) => {
       email,
       phone,
       description,
-      delivery: delivery === 'yes' ? true : false,
-      pickup: pickup === 'yes' ? true : false,
+      delivery: delivery === 'yes',
+      pickup: pickup === 'yes',
       invertedImage,
       image,
     };
@@ -381,7 +378,6 @@ const UpdateStoreForm = (props) => {
         variables,
       });
       // reset form fields
-      console.log(store.data);
       if (store.data) {
         toggleToastActive();
       }
@@ -391,7 +387,7 @@ const UpdateStoreForm = (props) => {
 
   // markup
   const toastMarkup = toastActive ? (
-    <Toast content='Store added' onDismiss={toggleToastActive} />
+    <Toast content="Store added" onDismiss={toggleToastActive} />
   ) : null;
 
   // validation
@@ -404,72 +400,86 @@ const UpdateStoreForm = (props) => {
     }
   };
 
+  // XXX add spinner or other loading indicator
+  if (queryLoading) return <Loading />;
   return (
     <Form onSubmit={handleSubmit} implicitSubmit={false}>
       {mutationLoading && <Loading />}
       <FormLayout>
         <ClientErrors error={clientErrors} />
         {mutationError && <ServerErrors error={mutationError} />}
-        <Heading>Add a store</Heading>
+        <Heading>Edit store</Heading>
         <TextField
-          label='Store name'
+          label="Store name"
           onChange={handleNameChange}
-          value={name}
-          type='text'
-          placeholder='Store name'
+          value={name || queryData.store.name}
+          type="text"
+          placeholder="Store name"
           labelHidden
           required
-          id='storeName'
+          id="storeName"
           error={nameError ? 'Store name is required' : ''}
-          onBlur={() => validateOnBlur(name, updateNameError)}
+          onBlur={() =>
+            validateOnBlur(name || queryData.store.name, updateNameError)
+          }
         />
 
         <TextField
-          label='Description'
+          label="Description"
           onChange={handleDescriptionChange}
-          value={description}
-          type='text'
+          value={description || queryData.store.description}
+          type="text"
           multiline={3}
-          placeholder='Enter a short description of the store (optional)'
+          placeholder="Enter a short description of the store (optional)"
           labelHidden
         />
         <FormLayout.Group>
           <Select
-            label='Store category'
+            label="Store category"
             options={categoryOptions}
             onChange={handleCategorySelectChange}
-            value={category}
-            placeholder='Choose store category'
+            value={category || queryData.store.category}
+            placeholder="Choose store category"
             error={categoryError ? 'Category is required' : ''}
-            onBlur={() => validateOnBlur(category, updateCategoryError)}
+            onBlur={() =>
+              validateOnBlur(
+                category || queryData.store.category,
+                updateCategoryError,
+              )
+            }
           />
           <Select
-            label='Store type'
-            options={typeOptions}
+            label="Store type"
+            options={getTypeOptions(queryData.store.category)}
             onChange={handleTypeChange}
-            value={type}
-            placeholder='Choose store type'
+            value={type || queryData.store.type.toLowerCase()}
+            placeholder="Choose store type"
             error={typeError ? 'Type is required' : ''}
-            onBlur={() => validateOnBlur(type, updateTypeError)}
+            onBlur={() =>
+              validateOnBlur(type || queryData.store.type, updateTypeError)
+            }
           />
         </FormLayout.Group>
         <FormLayout.Group>
           <Select
-            label='Primary shopping method'
+            label="Primary shopping method"
             options={primaryMethodOptions}
             onChange={handlePrimaryMethodSelectChange}
-            value={primaryMethod}
-            placeholder='Choose the primary shopping method'
+            value={primaryMethod || queryData.store.primaryMethod}
+            placeholder="Choose the primary shopping method"
             error={
               primaryMethodError ? 'Primary shpping method is required' : ''
             }
             onBlur={() =>
-              validateOnBlur(primaryMethod, updatePrimaryMethodError)
+              validateOnBlur(
+                primaryMethod || queryData.store.primaryMethod,
+                updatePrimaryMethodError,
+              )
             }
           />
           <ChoiceList
             allowMultiple
-            title='Available shopping methods'
+            title="Available shopping methods"
             choices={primaryMethodOptions}
             selected={selectedMethod}
             onChange={handleMethodChange}
@@ -478,75 +488,75 @@ const UpdateStoreForm = (props) => {
 
         <FormLayout.Group>
           <Select
-            label='Home delivery'
+            label="Home delivery"
             options={shippingOptions}
             onChange={handleDeliverySelectChange}
             value={delivery}
-            placeholder='Make a selection'
+            placeholder="Make a selection"
             error={deliveryError ? 'Delivery availabilty required' : ''}
             onBlur={() => validateOnBlur(delivery, updateDeliveryError)}
           />
           <Select
-            label='Curbside pickup'
+            label="Curbside pickup"
             options={shippingOptions}
             onChange={handlePickupSelectChange}
             value={pickup}
-            placeholder='Make a selection'
+            placeholder="Make a selection"
             error={pickupError ? 'Pickup availabilty required' : ''}
             onBlur={() => validateOnBlur(pickup, updatePickupError)}
           />
         </FormLayout.Group>
         <TextField
-          label='URL'
+          label="URL"
           onChange={handleURLChange}
           value={url}
-          type='url'
-          placeholder='Website URL'
+          type="url"
+          placeholder="Website URL"
           labelHidden
           error={urlError ? 'Website URL required' : ''}
           onBlur={() => validateOnBlur(url, updateUrlError)}
         />
         <FormLayout.Group>
           <TextField
-            label='Email'
+            label="Email"
             onChange={handleEmailChange}
             value={email}
-            type='email'
-            placeholder='Store email address (optional)'
+            type="email"
+            placeholder="Store email address (optional)"
             labelHidden
           />
           <TextField
-            label='Phone number'
+            label="Phone number"
             onChange={handlePhoneChange}
             value={phone}
-            type='tel'
-            placeholder='Store phone number (optional)'
+            type="tel"
+            placeholder="Store phone number (optional)"
             labelHidden
           />
         </FormLayout.Group>
         <FormLayout.Group>
           <TextField
-            label='Image URL'
+            label="Image URL"
             onChange={handleImageChange}
             value={image}
-            type='text'
-            placeholder='Store logo url (optional)'
+            type="text"
+            placeholder="Store logo url (optional)"
             labelHidden
-            helpText='Enter the URL of the image to use as the store logo'
+            helpText="Enter the URL of the image to use as the store logo"
           />
           <Checkbox
-            label='Inverted image'
+            label="Inverted image"
             checked={invertedImage}
             onChange={handleInvertedImagedChange}
-            helpText='Check if the logo image uses a white image on a transparent background'
+            helpText="Check if the logo image uses a white image on a transparent background"
           />
         </FormLayout.Group>
         <Button submit disabled={mutationLoading} aria-busy={mutationLoading}>
           {mutationLoading ? (
             <Spinner
-              accessibilityLabel='Spinner example'
-              size='small'
-              color='teal'
+              accessibilityLabel="Spinner example"
+              size="small"
+              color="teal"
             />
           ) : (
             'Submit'
@@ -555,7 +565,7 @@ const UpdateStoreForm = (props) => {
       </FormLayout>
 
       <FormLayout.Group>
-        <span></span>
+        <span />
         <>
           <Heading>Preview</Heading>
           <Store
@@ -572,14 +582,14 @@ const UpdateStoreForm = (props) => {
               methodPhone,
               image,
               invertedImage,
-              delivery: delivery === 'yes' ? true : false,
-              pickup: pickup === 'yes' ? true : false,
+              delivery: delivery === 'yes',
+              pickup: pickup === 'yes',
               phone,
               email,
             }}
           />
         </>
-        <span></span>
+        <span />
       </FormLayout.Group>
       {toastMarkup}
     </Form>

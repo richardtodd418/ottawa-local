@@ -75,10 +75,7 @@ const ServerErrors = ({ error }) => {
       <li>{error.message.replace('GraphQL error: ', '')}</li>
     );
   return (
-    <Banner
-      title='Server error'
-      status='critical'
-    >
+    <Banner title='Server error' status='critical'>
       <ul>{errorMarkup}</ul>
     </Banner>
   );
@@ -107,7 +104,7 @@ const AddStoreForm = (props) => {
   const [description, updateDescription] = useState('');
   const [category, updateCategory] = useState('');
   const [type, updateType] = useState('');
-  const [primaryMethod, updatePrimaryMethod] = useState();
+  const [primaryMethod, updatePrimaryMethod] = useState('');
   const [selectedMethod, updatedSelectedMethod] = useState([]);
   const [delivery, updateDelivery] = useState();
   const [pickup, updatePickup] = useState();
@@ -196,7 +193,7 @@ const AddStoreForm = (props) => {
     updateDescription('');
     updateCategory('');
     updateType('');
-    updatePrimaryMethod();
+    updatePrimaryMethod('');
     updatedSelectedMethod([]);
     updateDelivery();
     updatePickup();
@@ -264,7 +261,8 @@ const AddStoreForm = (props) => {
     validateOnChange(updatePickupError, value);
   }, []);
   const handleURLChange = useCallback((value) => {
-    updateURL(value), validateOnChange(updateUrlError, value);
+    updateURL(value);
+    validateOnChange(updateUrlError, value);
   }, []);
   const handleEmailChange = useCallback((value) => updateEmail(value), []);
   const handlePhoneChange = useCallback((value) => updatePhone(value), []);
@@ -549,4 +547,4 @@ const AddStoreForm = (props) => {
   );
 };
 export default AddStoreForm;
-export {CREATE_STORE_MUTATION};
+export { CREATE_STORE_MUTATION };
