@@ -22,9 +22,11 @@
 - [x] Success message on submission (Toast)
 - [x] Individual field validation for required fields
 - [ ] Check case of database entries (category is upper, type is lower)
+- [ ] Booleans are not being pulled in correctly for pickup and delivery
 - [ ] Remove submit on enter
 - [ ] Validate URL and Emails to match regex patterns
 - [ ] Update store (in addition to adding store) - so no need to refresh
+- [ ] Preview content loaded for editing the store
 
 ### Nice to haves
 

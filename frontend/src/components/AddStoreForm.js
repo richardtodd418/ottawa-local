@@ -75,7 +75,7 @@ const ServerErrors = ({ error }) => {
       <li>{error.message.replace('GraphQL error: ', '')}</li>
     );
   return (
-    <Banner title='Server error' status='critical'>
+    <Banner title="Server error" status="critical">
       <ul>{errorMarkup}</ul>
     </Banner>
   );
@@ -87,7 +87,7 @@ const ClientErrors = ({ error }) => {
   return (
     <Banner
       title={`To add this store, ${error.length} changes need to be made. Please fill out the following fields:`}
-      status='critical'
+      status="critical"
     >
       <ul>
         {error.map((err, index) => (
@@ -283,7 +283,7 @@ const AddStoreForm = (props) => {
       pickup,
       url,
     };
-    let errorArray = [];
+    const errorArray = [];
 
     const errorTitles = {
       name: 'Store name',
@@ -329,8 +329,8 @@ const AddStoreForm = (props) => {
       email,
       phone,
       description,
-      delivery: delivery === 'yes' ? true : false,
-      pickup: pickup === 'yes' ? true : false,
+      delivery: delivery === 'yes',
+      pickup: pickup === 'yes',
       invertedImage,
       image,
     };
@@ -352,7 +352,7 @@ const AddStoreForm = (props) => {
 
   // markup
   const toastMarkup = toastActive ? (
-    <Toast content='Store added' onDismiss={toggleToastActive} />
+    <Toast content="Store added" onDismiss={toggleToastActive} />
   ) : null;
 
   // validation
@@ -373,54 +373,54 @@ const AddStoreForm = (props) => {
         {mutationError && <ServerErrors error={mutationError} />}
         <Heading>Add a store</Heading>
         <TextField
-          label='Store name'
+          label="Store name"
           onChange={handleNameChange}
           value={name}
-          type='text'
-          placeholder='Store name'
+          type="text"
+          placeholder="Store name"
           labelHidden
           required
-          id='storeName'
+          id="storeName"
           error={nameError ? 'Store name is required' : ''}
           onBlur={() => validateOnBlur(name, updateNameError)}
         />
 
         <TextField
-          label='Description'
+          label="Description"
           onChange={handleDescriptionChange}
           value={description}
-          type='text'
+          type="text"
           multiline={3}
-          placeholder='Enter a short description of the store (optional)'
+          placeholder="Enter a short description of the store (optional)"
           labelHidden
         />
         <FormLayout.Group>
           <Select
-            label='Store category'
+            label="Store category"
             options={categoryOptions}
             onChange={handleCategorySelectChange}
             value={category}
-            placeholder='Choose store category'
+            placeholder="Choose store category"
             error={categoryError ? 'Category is required' : ''}
             onBlur={() => validateOnBlur(category, updateCategoryError)}
           />
           <Select
-            label='Store type'
+            label="Store type"
             options={typeOptions}
             onChange={handleTypeChange}
             value={type}
-            placeholder='Choose store type'
+            placeholder="Choose store type"
             error={typeError ? 'Type is required' : ''}
             onBlur={() => validateOnBlur(type, updateTypeError)}
           />
         </FormLayout.Group>
         <FormLayout.Group>
           <Select
-            label='Primary shopping method'
+            label="Primary shopping method"
             options={primaryMethodOptions}
             onChange={handlePrimaryMethodSelectChange}
             value={primaryMethod}
-            placeholder='Choose the primary shopping method'
+            placeholder="Choose the primary shopping method"
             error={
               primaryMethodError ? 'Primary shpping method is required' : ''
             }
@@ -430,7 +430,7 @@ const AddStoreForm = (props) => {
           />
           <ChoiceList
             allowMultiple
-            title='Available shopping methods'
+            title="Available shopping methods"
             choices={primaryMethodOptions}
             selected={selectedMethod}
             onChange={handleMethodChange}
@@ -439,75 +439,80 @@ const AddStoreForm = (props) => {
 
         <FormLayout.Group>
           <Select
-            label='Home delivery'
+            label="Home delivery"
             options={shippingOptions}
             onChange={handleDeliverySelectChange}
             value={delivery}
-            placeholder='Make a selection'
+            placeholder="Make a selection"
             error={deliveryError ? 'Delivery availabilty required' : ''}
             onBlur={() => validateOnBlur(delivery, updateDeliveryError)}
           />
           <Select
-            label='Curbside pickup'
+            label="Curbside pickup"
             options={shippingOptions}
             onChange={handlePickupSelectChange}
             value={pickup}
-            placeholder='Make a selection'
+            placeholder="Make a selection"
             error={pickupError ? 'Pickup availabilty required' : ''}
             onBlur={() => validateOnBlur(pickup, updatePickupError)}
           />
         </FormLayout.Group>
         <TextField
-          label='URL'
+          label="URL"
           onChange={handleURLChange}
           value={url}
-          type='url'
-          placeholder='Website URL'
+          type="url"
+          placeholder="Website URL"
           labelHidden
           error={urlError ? 'Website URL required' : ''}
           onBlur={() => validateOnBlur(url, updateUrlError)}
         />
         <FormLayout.Group>
           <TextField
-            label='Email'
+            label="Email"
             onChange={handleEmailChange}
             value={email}
-            type='email'
-            placeholder='Store email address (optional)'
+            type="email"
+            placeholder="Store email address (optional)"
             labelHidden
           />
           <TextField
-            label='Phone number'
+            label="Phone number"
             onChange={handlePhoneChange}
             value={phone}
-            type='tel'
-            placeholder='Store phone number (optional)'
+            type="tel"
+            placeholder="Store phone number (optional)"
             labelHidden
           />
         </FormLayout.Group>
         <FormLayout.Group>
           <TextField
-            label='Image URL'
+            label="Image URL"
             onChange={handleImageChange}
             value={image}
-            type='text'
-            placeholder='Store logo url (optional)'
+            type="text"
+            placeholder="Store logo url (optional)"
             labelHidden
-            helpText='Enter the URL of the image to use as the store logo'
+            helpText="Enter the URL of the image to use as the store logo"
           />
           <Checkbox
-            label='Inverted image'
+            label="Inverted image"
             checked={invertedImage}
             onChange={handleInvertedImagedChange}
-            helpText='Check if the logo image uses a white image on a transparent background'
+            helpText="Check if the logo image uses a white image on a transparent background"
           />
         </FormLayout.Group>
-        <Button submit disabled={mutationLoading} aria-busy={mutationLoading}>
+        <Button
+          primary
+          submit
+          disabled={mutationLoading}
+          aria-busy={mutationLoading}
+        >
           {mutationLoading ? (
             <Spinner
-              accessibilityLabel='Spinner example'
-              size='small'
-              color='teal'
+              accessibilityLabel="Spinner example"
+              size="small"
+              color="teal"
             />
           ) : (
             'Submit'
@@ -516,7 +521,7 @@ const AddStoreForm = (props) => {
       </FormLayout>
 
       <FormLayout.Group>
-        <span></span>
+        <span />
         <>
           <Heading>Preview</Heading>
           <Store
@@ -533,14 +538,14 @@ const AddStoreForm = (props) => {
               methodPhone,
               image,
               invertedImage,
-              delivery: delivery === 'yes' ? true : false,
-              pickup: pickup === 'yes' ? true : false,
+              delivery: delivery === 'yes',
+              pickup: pickup === 'yes',
               phone,
               email,
             }}
           />
         </>
-        <span></span>
+        <span />
       </FormLayout.Group>
       {toastMarkup}
     </Form>

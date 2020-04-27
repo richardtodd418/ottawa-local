@@ -32,6 +32,7 @@ const StoreFooter = ({ store }) => {
     online: GlobeMajorMonotone,
     form: FormsMajorMonotone,
   };
+
   const methodText = {
     phone: 'Phone orders',
     email: 'Email orders',
@@ -41,17 +42,17 @@ const StoreFooter = ({ store }) => {
 
   return (
     <>
-      <Banner icon={icons[primaryMethod]} status='info'>
+      <Banner icon={icons[primaryMethod]} status="info">
         {methodText[primaryMethod]}
       </Banner>
       <Card.Section>
-        <span className='icon-wrapper'>
+        <span className="icon-wrapper">
           <Icon source={ShipmentMajorMonotone} /> Home delivery{' '}
           <Badge status={delivery ? 'success' : 'warning'}>
             {delivery ? 'Yes' : 'No'}
           </Badge>
         </span>
-        <span className='icon-wrapper'>
+        <span className="icon-wrapper">
           <Icon source={StoreMajorMonotone} /> Store pickup{' '}
           <Badge status={pickup ? 'success' : 'warning'}>
             {pickup ? 'Yes' : 'No'}
@@ -59,7 +60,7 @@ const StoreFooter = ({ store }) => {
         </span>
       </Card.Section>
       <Card.Section>
-        <span className='store-card--footer'>
+        <span className="store-card--footer">
           <span>
             <Link external monochrome url={url}>
               Visit site
@@ -101,7 +102,7 @@ const Store = (props) => {
   return (
     <Layout.Section oneThird>
       <Card>
-        <span className='store-wrapper'>
+        <span className="store-wrapper">
           <ResourceList
             resourceName={{ singular: 'store', plural: 'stores' }}
             items={[
@@ -121,24 +122,22 @@ const Store = (props) => {
                 <ResourceItem
                   id={id}
                   media={
-                    store.image ? (
+                    store.image && (
                       <img
                         alt={`${store.name} logo`}
                         style={imageStyle}
                         src={avatarSource}
                       />
-                    ) : (
-                      <SkeletonThumbnail size='large' />
                     )
                   }
                   accessibilityLabel={`View details for ${name}`}
                   name={name}
                 >
                   <Heading>
-                    <TextStyle variation='strong'>{name}</TextStyle>
+                    <TextStyle variation="strong">{name}</TextStyle>
                   </Heading>
-                  <span className='store-info'>
-                    <TextStyle variation='strong'>{category}</TextStyle>
+                  <span className="store-info">
+                    <TextStyle variation="strong">{category}</TextStyle>
                     <br />
                     {type}
                   </span>
@@ -146,7 +145,7 @@ const Store = (props) => {
               );
             }}
           />
-          <span className='store-description--wrapper'>
+          <span className="store-description--wrapper">
             <Card.Section>{store.description}</Card.Section>
           </span>
           <StoreFooter store={store} />

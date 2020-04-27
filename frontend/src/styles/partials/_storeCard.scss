@@ -24,12 +24,13 @@
 
     &:hover {
       background-image: unset;
+      background-color: rgba(0, 0, 0, 0);
     }
   }
 
   .Polaris-ResourceItem__Container {
     flex-direction: row-reverse;
-    padding: 1.2rem 1.2rem 0rem 2rem;
+    padding: 1.2rem 0.6rem 1.2rem 2rem;
   }
 
   .Polaris-ResourceItem__Media {
@@ -63,6 +64,10 @@
     .Polaris-Icon {
       margin: auto 0px;
     }
+  }
+
+  .Polaris-Banner {
+    border-radius: 0;
   }
 }
 

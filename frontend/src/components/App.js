@@ -44,7 +44,7 @@ const App = () => {
     return stores.filter((store) => store.category === category);
   };
 
-  if (loading) return <Loading/>;
+  if (loading) return <Loading />;
   if (error) return <h1>Error...</h1>;
   const { stores } = data;
   const sortedStores = stores.sort((a, b) => {

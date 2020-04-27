@@ -133,7 +133,7 @@ const UpdateStoreForm = () => {
     { loading: mutationLoading, error: mutationError, data: mutationData },
   ] = useMutation(UPDATE_STORE_MUTATION);
 
-  // XXX get store from DB (alterative is to use state)
+  // get store from DB (alterative is to use state)
   const { loading: queryLoading, data: queryData } = useQuery(
     SINGLE_STORE_QUERY,
     {
@@ -240,6 +240,22 @@ const UpdateStoreForm = () => {
     updateInvertedImage(false);
   };
 
+  const queryShoppingMethods = ({ store }) => {
+    const methods = {
+      methodOnline: 'online',
+      methodForm: 'form',
+      methodPhone: 'phone',
+      methodEmail: 'email',
+    };
+    const methodArray = [];
+    for (const [key, value] of Object.entries(methods)) {
+      if (store[key]) {
+        methodArray.push(methods[key]);
+      }
+    }
+    return methodArray;
+  };
+
   // handlers
   const toggleToastActive = useCallback(
     () => setToastActive((active) => !active),
@@ -292,6 +308,16 @@ const UpdateStoreForm = () => {
     validateOnChange(updateDeliveryError, value);
   }, []);
 
+  const getString = (bool) => {
+    if (bool) return 'yes';
+    return 'no';
+  };
+
+  const getBoolean = (string) => {
+    if (string === 'yes') return true;
+    return false;
+  };
+
   const handlePickupSelectChange = useCallback((value) => {
     updatePickup(value);
     validateOnChange(updatePickupError, value);
@@ -309,6 +335,7 @@ const UpdateStoreForm = () => {
   );
 
   const handleSubmit = async () => {
+    // XXX Need to just submit changes fields, so need to compare the query data to the current state of the fields and only submit those that are different
     // check for required fields
     const required = {
       name,
@@ -450,7 +477,9 @@ const UpdateStoreForm = () => {
           />
           <Select
             label="Store type"
-            options={getTypeOptions(queryData.store.category)}
+            options={
+              category ? typeOptions : getTypeOptions(queryData.store.category)
+            }
             onChange={handleTypeChange}
             value={type || queryData.store.type.toLowerCase()}
             placeholder="Choose store type"
@@ -477,11 +506,16 @@ const UpdateStoreForm = () => {
               )
             }
           />
+
           <ChoiceList
             allowMultiple
             title="Available shopping methods"
             choices={primaryMethodOptions}
-            selected={selectedMethod}
+            selected={
+              selectedMethod.length === 0
+                ? queryShoppingMethods(queryData)
+                : selectedMethod
+            }
             onChange={handleMethodChange}
           />
         </FormLayout.Group>
@@ -491,36 +525,48 @@ const UpdateStoreForm = () => {
             label="Home delivery"
             options={shippingOptions}
             onChange={handleDeliverySelectChange}
-            value={delivery}
+            value={delivery || getString(queryData.store.delivery)}
             placeholder="Make a selection"
             error={deliveryError ? 'Delivery availabilty required' : ''}
-            onBlur={() => validateOnBlur(delivery, updateDeliveryError)}
+            onBlur={() =>
+              validateOnBlur(
+                delivery || getString(queryData.store.delivery),
+                updateDeliveryError,
+              )
+            }
           />
           <Select
             label="Curbside pickup"
             options={shippingOptions}
             onChange={handlePickupSelectChange}
-            value={pickup}
+            value={pickup || getString(queryData.store.pickup)}
             placeholder="Make a selection"
             error={pickupError ? 'Pickup availabilty required' : ''}
-            onBlur={() => validateOnBlur(pickup, updatePickupError)}
+            onBlur={() =>
+              validateOnBlur(
+                pickup || getString(queryData.store.pickup),
+                updatePickupError,
+              )
+            }
           />
         </FormLayout.Group>
         <TextField
           label="URL"
           onChange={handleURLChange}
-          value={url}
+          value={url || queryData.store.url}
           type="url"
           placeholder="Website URL"
           labelHidden
           error={urlError ? 'Website URL required' : ''}
-          onBlur={() => validateOnBlur(url, updateUrlError)}
+          onBlur={() =>
+            validateOnBlur(url || queryData.store.url, updateUrlError)
+          }
         />
         <FormLayout.Group>
           <TextField
             label="Email"
             onChange={handleEmailChange}
-            value={email}
+            value={email || queryData.store.email}
             type="email"
             placeholder="Store email address (optional)"
             labelHidden
@@ -528,7 +574,7 @@ const UpdateStoreForm = () => {
           <TextField
             label="Phone number"
             onChange={handlePhoneChange}
-            value={phone}
+            value={phone || queryData.store.phone}
             type="tel"
             placeholder="Store phone number (optional)"
             labelHidden
@@ -538,7 +584,7 @@ const UpdateStoreForm = () => {
           <TextField
             label="Image URL"
             onChange={handleImageChange}
-            value={image}
+            value={image || queryData.store.image}
             type="text"
             placeholder="Store logo url (optional)"
             labelHidden
@@ -546,12 +592,17 @@ const UpdateStoreForm = () => {
           />
           <Checkbox
             label="Inverted image"
-            checked={invertedImage}
+            checked={invertedImage || queryData.store.invertedImage}
             onChange={handleInvertedImagedChange}
             helpText="Check if the logo image uses a white image on a transparent background"
           />
         </FormLayout.Group>
-        <Button submit disabled={mutationLoading} aria-busy={mutationLoading}>
+        <Button
+          primary
+          submit
+          disabled={mutationLoading}
+          aria-busy={mutationLoading}
+        >
           {mutationLoading ? (
             <Spinner
               accessibilityLabel="Spinner example"
@@ -568,22 +619,25 @@ const UpdateStoreForm = () => {
         <span />
         <>
           <Heading>Preview</Heading>
+          {console.log(queryData.store)}
           <Store
             store={{
-              name,
-              category,
-              type,
-              description,
-              url,
-              primaryMethod,
-              methodOnline,
-              methodForm,
-              methodEmail,
-              methodPhone,
-              image,
-              invertedImage,
-              delivery: delivery === 'yes',
-              pickup: pickup === 'yes',
+              name: name || queryData.store.name,
+              category: category || queryData.store.category,
+              type: type || queryData.store.type,
+              description: description || queryData.store.description,
+              url: url || queryData.store.url,
+              primaryMethod: primaryMethod || queryData.store.primaryMethod,
+              methodOnline: methodOnline || queryData.store.methodOnline,
+              methodForm: methodForm || queryData.store.methodForm,
+              methodEmail: methodEmail || queryData.store.methodEmail,
+              methodPhone: methodPhone || queryData.store.methodPhone,
+              image: image || queryData.store.image,
+              invertedImage: invertedImage || queryData.store.invertedImage,
+              delivery: delivery
+                ? getBoolean(delivery)
+                : queryData.store.delivery,
+              pickup: pickup ? getBoolean(pickup) : queryData.store.pickup,
               phone,
               email,
             }}
