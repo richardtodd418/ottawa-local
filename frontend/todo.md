@@ -2,6 +2,7 @@
 
 - [ ] Title
 - [ ] Put footer at very bottom
+- [ ] Refetch data after homepage loads after store update
 
 ## Stores page
 
@@ -36,6 +37,15 @@
 - [ ] Phone needs to show if there is a valid phone number
 - [ ] Tags
 
+### Fixes
+
+Have the delivery and pickup stored as strings
+Have the available methods stored as an array
+
 ## DB
 
 - [ ] Is types a protected field, as I can't edit it in Primsa
+
+## Routes
+
+Put Routes in their own component

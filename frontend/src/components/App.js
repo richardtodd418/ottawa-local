@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@apollo/react-hooks';
 import { gql } from 'apollo-boost';
-import { Layout, FooterHelp,  Page, Loading } from '@shopify/polaris';
+import { Layout, FooterHelp, Page, Loading } from '@shopify/polaris';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
-// import storesList from "../data/stores";
 import Stores from './Stores';
 import AddStoreForm from './AddStoreForm';
 import UpdateStoreForm from './UpdateStoreForm';
@@ -37,13 +36,10 @@ const ALL_STORES_QUERY = gql`
 `;
 
 const App = () => {
-  const { loading, error, data } = useQuery(ALL_STORES_QUERY);
-  // using local data for stores
-  // const [stores] = useState(storesList);
-  const filterStores = (stores, category) => {
-    return stores.filter((store) => store.category === category);
-  };
+  const { loading, error, data, refetch } = useQuery(ALL_STORES_QUERY);
 
+  const filterStores = (storesInput, category) =>
+    storesInput.filter((store) => store.category === category);
   if (loading) return <Loading />;
   if (error) return <h1>Error...</h1>;
   const { stores } = data;
@@ -58,12 +54,17 @@ const App = () => {
     return 0;
   });
 
+  const handleRefetch = async () => {
+    await refetch();
+  };
+
   const categories = sortedStores.map((store) => store.category);
   const uniqueCategories = [...new Set(categories)];
   return (
     <Router>
       <div>
         <Nav uniqueCategories={uniqueCategories} />
+
         <Page>
           <Switch>
             {uniqueCategories.map((cat, index) => (
@@ -71,13 +72,13 @@ const App = () => {
                 <Stores stores={filterStores(sortedStores, cat)} />
               </Route>
             ))}
-            <Route path='/addstore'>
-              <AddStoreForm store={false} />
+            <Route path="/addstore">
+              <AddStoreForm handleRefetch={handleRefetch} />
             </Route>
-            <Route path='/updatestore/'>
-              <UpdateStoreForm />
+            <Route path="/updatestore/">
+              <UpdateStoreForm handleRefetch={handleRefetch} />
             </Route>
-            <Route path='/'>
+            <Route path="/">
               <Stores stores={sortedStores} />
             </Route>
           </Switch>
@@ -95,4 +96,5 @@ const App = () => {
   );
 };
 
+export { ALL_STORES_QUERY };
 export default App;

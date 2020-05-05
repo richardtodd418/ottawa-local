@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/react-hooks';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Redirect } from 'react-router-dom';
 import { gql } from 'apollo-boost';
 import {
   Form,
@@ -11,18 +11,19 @@ import {
   ChoiceList,
   Checkbox,
   Heading,
-  Banner,
   Spinner,
   Loading,
   Toast,
 } from '@shopify/polaris';
 
+import { ClientErrors, ServerErrors } from './Errors';
+
 import Store from './Store';
-// XXX Query for getting store info - could just use state on location passed through router
 
 const SINGLE_STORE_QUERY = gql`
   query SINGLE_STORE_QUERY($id: ID!) {
     store(where: { id: $id }) {
+      id
       name
       category
       type
@@ -45,6 +46,7 @@ const SINGLE_STORE_QUERY = gql`
 
 const UPDATE_STORE_MUTATION = gql`
   mutation UPDATE_STORE_MUTATION(
+    $id: ID!
     $name: String!
     $category: String!
     $type: String!
@@ -63,6 +65,7 @@ const UPDATE_STORE_MUTATION = gql`
     $image: String
   ) {
     updateStore(
+      id: $id
       name: $name
       category: $category
       type: $type
@@ -85,75 +88,55 @@ const UPDATE_STORE_MUTATION = gql`
   }
 `;
 
-const ServerErrors = ({ error }) => {
-  if (!error || !error.message) return null;
-  const errorMarkup =
-    error.networkError &&
-    error.networkError.result &&
-    error.networkError.result.errors.length ? (
-      error.networkError.result.errors.map((error, index) => (
-        <li key={`error--${index}`}>
-          {error.message.replace('GraphQL error: ', '')}
-        </li>
-      ))
-    ) : (
-      <li>{error.message.replace('GraphQL error: ', '')}</li>
-    );
-  return (
-    <Banner title="Server error" status="critical">
-      <ul>{errorMarkup}</ul>
-    </Banner>
-  );
-};
+const UpdateStoreFormInner = ({ queryData, source, handleRefetch }) => {
+  const storeData = queryData.store;
 
-const ClientErrors = ({ error }) => {
-  if (error.length === 0) return null;
-
-  return (
-    <Banner
-      title={`To add this store, ${error.length} changes need to be made. Please fill out the following fields:`}
-      status="critical"
-    >
-      <ul>
-        {error.map((err, index) => (
-          <li key={`error-${index}`}>{err}</li>
-        ))}
-      </ul>
-    </Banner>
-  );
-};
-
-const UpdateStoreForm = () => {
-  // route state
-  const location = useLocation();
-  const { storeId } = location.state;
   // gql
   const [
     updateStore,
     { loading: mutationLoading, error: mutationError, data: mutationData },
   ] = useMutation(UPDATE_STORE_MUTATION);
 
-  // get store from DB (alterative is to use state)
-  const { loading: queryLoading, data: queryData } = useQuery(
-    SINGLE_STORE_QUERY,
-    {
-      variables: { id: storeId },
-    },
-  );
+  const getString = (bool) => {
+    if (bool) return 'yes';
+    return 'no';
+  };
+
+  const queryShoppingMethods = ({ store }) => {
+    const methods = {
+      methodOnline: 'online',
+      methodForm: 'form',
+      methodPhone: 'phone',
+      methodEmail: 'email',
+    };
+    const methodArray = [];
+    for (const [key, value] of Object.entries(methods)) {
+      if (store[key]) {
+        methodArray.push(methods[key]);
+      }
+    }
+    return methodArray;
+  };
+  const availableMethods = queryShoppingMethods(queryData);
+
   // form state
-  const [name, updateName] = useState('');
-  const [description, updateDescription] = useState('');
-  const [category, updateCategory] = useState('');
-  const [type, updateType] = useState('');
-  const [primaryMethod, updatePrimaryMethod] = useState('');
-  const [selectedMethod, updatedSelectedMethod] = useState([]);
-  const [delivery, updateDelivery] = useState();
-  const [pickup, updatePickup] = useState();
-  const [url, updateURL] = useState('');
-  const [email, updateEmail] = useState('');
-  const [phone, updatePhone] = useState('');
-  const [image, updateImage] = useState('');
-  const [invertedImage, updateInvertedImage] = useState(false);
+  const [name, updateName] = useState(storeData.name);
+  const [description, updateDescription] = useState(storeData.description);
+  const [category, updateCategory] = useState(storeData.category);
+  const [type, updateType] = useState(storeData.type);
+  const [primaryMethod, updatePrimaryMethod] = useState(
+    storeData.primaryMethod,
+  );
+  const [selectedMethod, updatedSelectedMethod] = useState(availableMethods);
+  const [delivery, updateDelivery] = useState(getString(storeData.delivery));
+  const [pickup, updatePickup] = useState(getString(storeData.pickup));
+  const [url, updateURL] = useState(storeData.url);
+  const [email, updateEmail] = useState(storeData.email);
+  const [phone, updatePhone] = useState(storeData.phone);
+  const [image, updateImage] = useState(storeData.image);
+  const [invertedImage, updateInvertedImage] = useState(
+    storeData.invertedImage,
+  );
   const [clientErrors, updateClientErrors] = useState([]);
   const [methodForm] = useState(selectedMethod.includes('form'));
   const [methodEmail] = useState(selectedMethod.includes('email'));
@@ -169,6 +152,7 @@ const UpdateStoreForm = () => {
   const [deliveryError, updateDeliveryError] = useState(false);
   const [pickupError, updatePickupError] = useState(false);
   const [urlError, updateUrlError] = useState(false);
+  const [submitted, updateSubmitted] = useState(false);
 
   // options
   const categoryOptions = [
@@ -209,7 +193,6 @@ const UpdateStoreForm = () => {
   };
 
   const typeOptions = typesObject[category];
-  const getTypeOptions = (cat) => typesObject[cat];
 
   const primaryMethodOptions = [
     { label: 'Email', value: 'email' },
@@ -238,22 +221,6 @@ const UpdateStoreForm = () => {
     updatePhone('');
     updateImage('');
     updateInvertedImage(false);
-  };
-
-  const queryShoppingMethods = ({ store }) => {
-    const methods = {
-      methodOnline: 'online',
-      methodForm: 'form',
-      methodPhone: 'phone',
-      methodEmail: 'email',
-    };
-    const methodArray = [];
-    for (const [key, value] of Object.entries(methods)) {
-      if (store[key]) {
-        methodArray.push(methods[key]);
-      }
-    }
-    return methodArray;
   };
 
   // handlers
@@ -308,16 +275,6 @@ const UpdateStoreForm = () => {
     validateOnChange(updateDeliveryError, value);
   }, []);
 
-  const getString = (bool) => {
-    if (bool) return 'yes';
-    return 'no';
-  };
-
-  const getBoolean = (string) => {
-    if (string === 'yes') return true;
-    return false;
-  };
-
   const handlePickupSelectChange = useCallback((value) => {
     updatePickup(value);
     validateOnChange(updatePickupError, value);
@@ -329,13 +286,13 @@ const UpdateStoreForm = () => {
   const handleEmailChange = useCallback((value) => updateEmail(value), []);
   const handlePhoneChange = useCallback((value) => updatePhone(value), []);
   const handleImageChange = useCallback((value) => updateImage(value), []);
-  const handleInvertedImagedChange = useCallback(
-    (value) => updateInvertedImage(value),
-    [],
-  );
+  const handleInvertedImagedChange = useCallback((value) => {
+    updateInvertedImage(value);
+  }, []);
 
   const handleSubmit = async () => {
     // XXX Need to just submit changes fields, so need to compare the query data to the current state of the fields and only submit those that are different
+
     // check for required fields
     const required = {
       name,
@@ -378,8 +335,8 @@ const UpdateStoreForm = () => {
         }
       }
     }
-
     const variables = {
+      id: storeData.id,
       name,
       category,
       type,
@@ -406,6 +363,7 @@ const UpdateStoreForm = () => {
       });
       // reset form fields
       if (store.data) {
+        handleRefetch();
         toggleToastActive();
       }
       clearForm();
@@ -414,7 +372,14 @@ const UpdateStoreForm = () => {
 
   // markup
   const toastMarkup = toastActive ? (
-    <Toast content="Store added" onDismiss={toggleToastActive} />
+    <Toast
+      duration={2000}
+      content="Store updated"
+      onDismiss={() => {
+        toggleToastActive();
+        updateSubmitted(true);
+      }}
+    />
   ) : null;
 
   // validation
@@ -427,8 +392,16 @@ const UpdateStoreForm = () => {
     }
   };
 
+  if (submitted)
+    return (
+      <Redirect
+        to={{
+          pathname: '/',
+          state: { source },
+        }}
+      />
+    );
   // XXX add spinner or other loading indicator
-  if (queryLoading) return <Loading />;
   return (
     <Form onSubmit={handleSubmit} implicitSubmit={false}>
       {mutationLoading && <Loading />}
@@ -439,22 +412,20 @@ const UpdateStoreForm = () => {
         <TextField
           label="Store name"
           onChange={handleNameChange}
-          value={name || queryData.store.name}
+          value={name}
           type="text"
           placeholder="Store name"
           labelHidden
           required
           id="storeName"
           error={nameError ? 'Store name is required' : ''}
-          onBlur={() =>
-            validateOnBlur(name || queryData.store.name, updateNameError)
-          }
+          onBlur={() => validateOnBlur(name, updateNameError)}
         />
 
         <TextField
           label="Description"
           onChange={handleDescriptionChange}
-          value={description || queryData.store.description}
+          value={description}
           type="text"
           multiline={3}
           placeholder="Enter a short description of the store (optional)"
@@ -465,28 +436,19 @@ const UpdateStoreForm = () => {
             label="Store category"
             options={categoryOptions}
             onChange={handleCategorySelectChange}
-            value={category || queryData.store.category}
+            value={category}
             placeholder="Choose store category"
             error={categoryError ? 'Category is required' : ''}
-            onBlur={() =>
-              validateOnBlur(
-                category || queryData.store.category,
-                updateCategoryError,
-              )
-            }
+            onBlur={() => validateOnBlur(category, updateCategoryError)}
           />
           <Select
             label="Store type"
-            options={
-              category ? typeOptions : getTypeOptions(queryData.store.category)
-            }
+            options={typeOptions}
             onChange={handleTypeChange}
-            value={type || queryData.store.type.toLowerCase()}
+            value={type.toLowerCase()}
             placeholder="Choose store type"
             error={typeError ? 'Type is required' : ''}
-            onBlur={() =>
-              validateOnBlur(type || queryData.store.type, updateTypeError)
-            }
+            onBlur={() => validateOnBlur(type, updateTypeError)}
           />
         </FormLayout.Group>
         <FormLayout.Group>
@@ -494,16 +456,13 @@ const UpdateStoreForm = () => {
             label="Primary shopping method"
             options={primaryMethodOptions}
             onChange={handlePrimaryMethodSelectChange}
-            value={primaryMethod || queryData.store.primaryMethod}
+            value={primaryMethod}
             placeholder="Choose the primary shopping method"
             error={
               primaryMethodError ? 'Primary shpping method is required' : ''
             }
             onBlur={() =>
-              validateOnBlur(
-                primaryMethod || queryData.store.primaryMethod,
-                updatePrimaryMethodError,
-              )
+              validateOnBlur(primaryMethod, updatePrimaryMethodError)
             }
           />
 
@@ -511,11 +470,7 @@ const UpdateStoreForm = () => {
             allowMultiple
             title="Available shopping methods"
             choices={primaryMethodOptions}
-            selected={
-              selectedMethod.length === 0
-                ? queryShoppingMethods(queryData)
-                : selectedMethod
-            }
+            selected={selectedMethod}
             onChange={handleMethodChange}
           />
         </FormLayout.Group>
@@ -525,48 +480,36 @@ const UpdateStoreForm = () => {
             label="Home delivery"
             options={shippingOptions}
             onChange={handleDeliverySelectChange}
-            value={delivery || getString(queryData.store.delivery)}
+            value={delivery}
             placeholder="Make a selection"
             error={deliveryError ? 'Delivery availabilty required' : ''}
-            onBlur={() =>
-              validateOnBlur(
-                delivery || getString(queryData.store.delivery),
-                updateDeliveryError,
-              )
-            }
+            onBlur={() => validateOnBlur(delivery, updateDeliveryError)}
           />
           <Select
             label="Curbside pickup"
             options={shippingOptions}
             onChange={handlePickupSelectChange}
-            value={pickup || getString(queryData.store.pickup)}
+            value={pickup}
             placeholder="Make a selection"
             error={pickupError ? 'Pickup availabilty required' : ''}
-            onBlur={() =>
-              validateOnBlur(
-                pickup || getString(queryData.store.pickup),
-                updatePickupError,
-              )
-            }
+            onBlur={() => validateOnBlur(pickup, updatePickupError)}
           />
         </FormLayout.Group>
         <TextField
           label="URL"
           onChange={handleURLChange}
-          value={url || queryData.store.url}
+          value={url}
           type="url"
           placeholder="Website URL"
           labelHidden
           error={urlError ? 'Website URL required' : ''}
-          onBlur={() =>
-            validateOnBlur(url || queryData.store.url, updateUrlError)
-          }
+          onBlur={() => validateOnBlur(url, updateUrlError)}
         />
         <FormLayout.Group>
           <TextField
             label="Email"
             onChange={handleEmailChange}
-            value={email || queryData.store.email}
+            value={email}
             type="email"
             placeholder="Store email address (optional)"
             labelHidden
@@ -574,7 +517,7 @@ const UpdateStoreForm = () => {
           <TextField
             label="Phone number"
             onChange={handlePhoneChange}
-            value={phone || queryData.store.phone}
+            value={phone}
             type="tel"
             placeholder="Store phone number (optional)"
             labelHidden
@@ -584,7 +527,7 @@ const UpdateStoreForm = () => {
           <TextField
             label="Image URL"
             onChange={handleImageChange}
-            value={image || queryData.store.image}
+            value={image}
             type="text"
             placeholder="Store logo url (optional)"
             labelHidden
@@ -592,7 +535,7 @@ const UpdateStoreForm = () => {
           />
           <Checkbox
             label="Inverted image"
-            checked={invertedImage || queryData.store.invertedImage}
+            checked={invertedImage}
             onChange={handleInvertedImagedChange}
             helpText="Check if the logo image uses a white image on a transparent background"
           />
@@ -619,25 +562,22 @@ const UpdateStoreForm = () => {
         <span />
         <>
           <Heading>Preview</Heading>
-          {console.log(queryData.store)}
           <Store
             store={{
-              name: name || queryData.store.name,
-              category: category || queryData.store.category,
-              type: type || queryData.store.type,
-              description: description || queryData.store.description,
-              url: url || queryData.store.url,
-              primaryMethod: primaryMethod || queryData.store.primaryMethod,
-              methodOnline: methodOnline || queryData.store.methodOnline,
-              methodForm: methodForm || queryData.store.methodForm,
-              methodEmail: methodEmail || queryData.store.methodEmail,
-              methodPhone: methodPhone || queryData.store.methodPhone,
-              image: image || queryData.store.image,
-              invertedImage: invertedImage || queryData.store.invertedImage,
-              delivery: delivery
-                ? getBoolean(delivery)
-                : queryData.store.delivery,
-              pickup: pickup ? getBoolean(pickup) : queryData.store.pickup,
+              name,
+              category,
+              type,
+              description,
+              url,
+              primaryMethod,
+              methodOnline,
+              methodForm,
+              methodEmail,
+              methodPhone,
+              image,
+              invertedImage,
+              delivery,
+              pickup,
               phone,
               email,
             }}
@@ -647,6 +587,29 @@ const UpdateStoreForm = () => {
       </FormLayout.Group>
       {toastMarkup}
     </Form>
+  );
+};
+
+const UpdateStoreForm = ({ handleRefetch }) => {
+  // route state
+  const location = useLocation();
+  const { storeId } = location.state;
+
+  // get store from DB (alterative is to use state)
+  const { loading: queryLoading, data: queryData } = useQuery(
+    SINGLE_STORE_QUERY,
+    {
+      variables: { id: storeId },
+    },
+  );
+
+  if (queryLoading) return <Loading />;
+  return (
+    <UpdateStoreFormInner
+      queryData={queryData}
+      source={location.pathname}
+      handleRefetch={handleRefetch}
+    />
   );
 };
 export default UpdateStoreForm;

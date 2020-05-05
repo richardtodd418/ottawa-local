@@ -1,6 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { useMutation } from '@apollo/react-hooks';
 import { gql } from 'apollo-boost';
+import { Redirect } from 'react-router-dom';
+
 import {
   Form,
   FormLayout,
@@ -10,11 +12,11 @@ import {
   ChoiceList,
   Checkbox,
   Heading,
-  Banner,
   Spinner,
   Loading,
   Toast,
 } from '@shopify/polaris';
+import { ClientErrors, ServerErrors } from './Errors';
 
 import Store from './Store';
 
@@ -60,45 +62,7 @@ const CREATE_STORE_MUTATION = gql`
   }
 `;
 
-const ServerErrors = ({ error }) => {
-  if (!error || !error.message) return null;
-  const errorMarkup =
-    error.networkError &&
-    error.networkError.result &&
-    error.networkError.result.errors.length ? (
-      error.networkError.result.errors.map((error, index) => (
-        <li key={`error--${index}`}>
-          {error.message.replace('GraphQL error: ', '')}
-        </li>
-      ))
-    ) : (
-      <li>{error.message.replace('GraphQL error: ', '')}</li>
-    );
-  return (
-    <Banner title="Server error" status="critical">
-      <ul>{errorMarkup}</ul>
-    </Banner>
-  );
-};
-
-const ClientErrors = ({ error }) => {
-  if (error.length === 0) return null;
-
-  return (
-    <Banner
-      title={`To add this store, ${error.length} changes need to be made. Please fill out the following fields:`}
-      status="critical"
-    >
-      <ul>
-        {error.map((err, index) => (
-          <li key={`error-${index}`}>{err}</li>
-        ))}
-      </ul>
-    </Banner>
-  );
-};
-
-const AddStoreForm = (props) => {
+const AddStoreForm = ({ handleRefetch }) => {
   // form state
   const [name, updateName] = useState('');
   const [description, updateDescription] = useState('');
@@ -134,6 +98,7 @@ const AddStoreForm = (props) => {
   const [deliveryError, updateDeliveryError] = useState(false);
   const [pickupError, updatePickupError] = useState(false);
   const [urlError, updateUrlError] = useState(false);
+  const [submitted, updateSubmitted] = useState(false);
 
   // options
   const categoryOptions = [
@@ -342,8 +307,8 @@ const AddStoreForm = (props) => {
         variables,
       });
       // reset form fields
-      console.log(store.data);
       if (store.data) {
+        handleRefetch();
         toggleToastActive();
       }
       clearForm();
@@ -352,7 +317,14 @@ const AddStoreForm = (props) => {
 
   // markup
   const toastMarkup = toastActive ? (
-    <Toast content="Store added" onDismiss={toggleToastActive} />
+    <Toast
+      duration={2000}
+      content="Store added"
+      onDismiss={() => {
+        toggleToastActive();
+        updateSubmitted(true);
+      }}
+    />
   ) : null;
 
   // validation
@@ -365,6 +337,7 @@ const AddStoreForm = (props) => {
     }
   };
 
+  if (submitted) return <Redirect to="/" />;
   return (
     <Form onSubmit={handleSubmit} implicitSubmit={false}>
       {mutationLoading && <Loading />}

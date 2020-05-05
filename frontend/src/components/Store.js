@@ -10,7 +10,6 @@ import {
   ResourceList,
   ResourceItem,
   Link,
-  SkeletonThumbnail,
   Badge,
   Icon,
 } from '@shopify/polaris';
@@ -91,14 +90,22 @@ const StoreFooter = ({ store }) => {
 
 const Store = (props) => {
   const { store } = props;
-  const bg = store.invertedImage ? 'black' : 'none';
+
   const imageStyle = {
     objectFit: 'contain',
     objectPosition: 'center',
     maxWidth: '75px',
     height: '75px',
-    backgroundColor: bg,
+    backgroundColor: 'none',
   };
+  const imageStyleInverted = {
+    objectFit: 'contain',
+    objectPosition: 'center',
+    maxWidth: '75px',
+    height: '75px',
+    backgroundColor: 'black',
+  };
+
   return (
     <Layout.Section oneThird>
       <Card>
@@ -117,7 +124,9 @@ const Store = (props) => {
             ]}
             renderItem={(item) => {
               const { id, avatarSource, name, type, category } = item;
-
+              const style = store.invertedImage
+                ? imageStyleInverted
+                : imageStyle;
               return (
                 <ResourceItem
                   id={id}
@@ -125,7 +134,7 @@ const Store = (props) => {
                     store.image && (
                       <img
                         alt={`${store.name} logo`}
-                        style={imageStyle}
+                        style={style}
                         src={avatarSource}
                       />
                     )

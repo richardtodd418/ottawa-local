@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Layout, Page, FooterHelp } from '@shopify/polaris';
+import { Layout } from '@shopify/polaris';
+
 import Store from './Store';
 
 const Stores = (props) => {
