@@ -344,7 +344,9 @@ const AddStoreForm = ({ handleRefetch }) => {
       <FormLayout>
         <ClientErrors error={clientErrors} />
         {mutationError && <ServerErrors error={mutationError} />}
-        <Heading>Add a store</Heading>
+        <span className="Form-Heading--Wrapper">
+          <Heading>Add a store</Heading>
+        </span>
         <TextField
           label="Store name"
           onChange={handleNameChange}
