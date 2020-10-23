@@ -408,7 +408,9 @@ const UpdateStoreFormInner = ({ queryData, source, handleRefetch }) => {
       <FormLayout>
         <ClientErrors error={clientErrors} />
         {mutationError && <ServerErrors error={mutationError} />}
-        <Heading>Edit store</Heading>
+        <span className="Form-Heading--Wrapper">
+          <Heading>Edit store</Heading>
+        </span>
         <TextField
           label="Store name"
           onChange={handleNameChange}
@@ -612,5 +614,6 @@ const UpdateStoreForm = ({ handleRefetch }) => {
     />
   );
 };
+
 export default UpdateStoreForm;
 export { UPDATE_STORE_MUTATION };

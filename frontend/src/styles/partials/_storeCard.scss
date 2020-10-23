@@ -19,7 +19,8 @@
     margin-top: 0;
   }
 
-  .Polaris-ResourceItem {
+  .Polaris-ResourceItem,
+  .Polaris-ResourceItem__ListItem {
     cursor: auto;
 
     &:hover {
