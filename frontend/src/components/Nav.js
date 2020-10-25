@@ -12,7 +12,7 @@ const Nav = (props) => {
   };
   return (
     <nav className='nav'>
-      <DisplayText size='large'>Ottawa Stores</DisplayText>
+      <DisplayText size='large'>Ottawa Local</DisplayText>
 
       <ul className='nav-links'>
         <li>
