@@ -474,7 +474,7 @@ const AddStoreForm = ({ handleRefetch }) => {
             label="Inverted image"
             checked={invertedImage}
             onChange={handleInvertedImagedChange}
-            helpText="Check if the logo image uses a white image on a transparent background"
+            helpText="Enable this if the logo image uses a light image on a transparent background to improve contrast"
           />
         </FormLayout.Group>
         <Button
